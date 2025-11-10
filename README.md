@@ -1,4 +1,4 @@
-### ----------------------------------------- COC-Project-Bank Queue-Simulator--------------------------------------------
+# 🏦COC - Project - Bank Queue Simulator
 
 
 ## 📖 Project Description:-
@@ -42,7 +42,8 @@ Use the following commands to compile and execute the program:
 After Executing, the terminal will show as:-
 
 **Example Terminal Session:-**
-```$ gcc bank_queue.c -o bank_queue -lm
+```
+$ gcc bank_queue.c -o bank_queue -lm
 $ ./bank_queue
 
 ======================================
