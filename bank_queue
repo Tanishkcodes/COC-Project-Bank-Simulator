@@ -1,3 +1,18 @@
+/*
+  Bank Queue Simulation - 
+  - 480-minute main loop implemented with a for-loop
+  - Poisson arrivals per minute
+  - Dynamic linked-list queue using malloc/free
+  - Multiple tellers (user input)
+  - Service time 2 or 3 minutes (uniform)
+  - Wait times recorded in a dynamic array (realloc)
+  - Functions used for major tasks (customer_arrives, assign_tellers, process_services)
+  - Final report: Mean, Median, Mode, Standard Deviation, Longest Wait.
+*/
+
+
+//----------Standard Libraries----------------------
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
