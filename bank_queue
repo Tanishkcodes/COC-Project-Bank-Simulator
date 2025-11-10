@@ -1,0 +1,410 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include <time.h>
+
+// ---------------------------
+// STRUCTURE DEFINITIONS
+// ---------------------------
+
+// Structure for each customer in queue
+typedef struct Customer {
+    int arrival_time;          // When customer arrives at bank
+    int service_start_time;    // When teller starts serving them
+    int wait_time;             // Time spent waiting before service
+    struct Customer* next;     // Pointer to next customer (for linked list)
+} Customer;
+
+// Structure for queue using linked list
+typedef struct {
+    Customer* front;           // First customer in queue
+    Customer* rear;            // Last customer in queue
+    int size;                  // Current queue size
+} Queue;
+
+// Structure for each teller (bank counter)
+typedef struct {
+    int busy_until;            // Minute until which teller is busy
+    int current_customer_id;   // ID or time when current customer arrived (just for tracking)
+} Teller;
+
+// Dynamic array to store all wait times for analysis
+typedef struct {
+    int* data;                 // Array of wait times
+    int size;                  // Number of wait times stored
+    int capacity;              // Allocated memory size
+} WaitTimeArray;
+
+
+// ---------------------------
+// QUEUE FUNCTIONS
+// ---------------------------
+
+// Initialize empty queue
+void init_queue(Queue* q) {
+    q->front = NULL;
+    q->rear = NULL;
+    q->size = 0;
+}
+
+// Add (enqueue) a new customer to queue
+void enqueue(Queue* q, int arrival_time) {
+    Customer* new_customer = (Customer*)malloc(sizeof(Customer));
+    new_customer->arrival_time = arrival_time;
+    new_customer->service_start_time = -1;
+    new_customer->wait_time = 0;
+    new_customer->next = NULL;
+
+    // If queue is empty, new customer becomes both front and rear
+    if (q->rear == NULL) {
+        q->front = q->rear = new_customer;
+    } else {
+        q->rear->next = new_customer;
+        q->rear = new_customer;
+    }
+    q->size++;
+}
+
+// Remove (dequeue) customer from front of queue
+Customer* dequeue(Queue* q) {
+    if (q->front == NULL) {
+        return NULL; // Queue empty
+    }
+
+    Customer* temp = q->front;
+    q->front = q->front->next;
+
+    // If queue becomes empty after dequeue
+    if (q->front == NULL) {
+        q->rear = NULL;
+    }
+
+    q->size--;
+    return temp;
+}
+
+// Free all memory used by queue
+void free_queue(Queue* q) {
+    while (q->front != NULL) {
+        Customer* temp = dequeue(q);
+        free(temp);
+    }
+}
+
+
+// ---------------------------
+// WAIT TIME ARRAY FUNCTIONS
+// ---------------------------
+
+// Create dynamic array for storing wait times
+WaitTimeArray* create_wait_time_array() {
+    WaitTimeArray* arr = (WaitTimeArray*)malloc(sizeof(WaitTimeArray));
+    arr->capacity = 1000;
+    arr->size = 0;
+    arr->data = (int*)malloc(arr->capacity * sizeof(int));
+    return arr;
+}
+
+// Add a wait time to the array
+void add_wait_time(WaitTimeArray* arr, int wait_time) {
+    if (arr->size >= arr->capacity) {
+        // Increase capacity if full
+        arr->capacity *= 2;
+        arr->data = (int*)realloc(arr->data, arr->capacity * sizeof(int));
+    }
+    arr->data[arr->size++] = wait_time;
+}
+
+// Free memory of wait time array
+void free_wait_time_array(WaitTimeArray* arr) {
+    free(arr->data);
+    free(arr);
+}
+
+
+// ---------------------------
+// POISSON ARRIVAL FUNCTIONS
+// ---------------------------
+
+// Factorial function for Poisson formula
+unsigned long long factorial(int n) {
+    if (n <= 1) return 1;
+    unsigned long long result = 1;
+    for (int i = 2; i <= n; i++) {
+        result *= i;
+    }
+    return result;
+}
+
+// Poisson probability function
+double poisson_probability(double lambda, int k) {
+    return (pow(lambda, k) * exp(-lambda)) / factorial(k);
+}
+
+// Simulate number of customers arriving in a given minute
+int customer_arrives(double lambda) {
+    double random_val = (double)rand() / RAND_MAX; // Random between 0 and 1
+    double cumulative = 0.0;
+
+    // Calculate cumulative probability for 0–9 arrivals
+    for (int k = 0; k < 10; k++) {
+        cumulative += poisson_probability(lambda, k);
+        if (random_val <= cumulative) {
+            return k; // Return number of arrivals
+        }
+    }
+    return 0;
+}
+
+
+// ---------------------------
+// SERVICE LOGIC (TELLERS)
+// ---------------------------
+
+// Teller serves next customer if free
+int serve_customer(Queue* q, Teller* teller, int current_minute, int service_time) {
+    // Teller is free and someone is waiting
+    if (teller->busy_until <= current_minute && q->size > 0) {
+        Customer* customer = dequeue(q);
+
+        // Record time service starts and waiting time
+        customer->service_start_time = current_minute;
+        customer->wait_time = current_minute - customer->arrival_time;
+
+        // Teller will be busy for 'service_time' minutes
+        teller->busy_until = current_minute + service_time;
+        teller->current_customer_id = customer->arrival_time;
+
+        int wait = customer->wait_time;
+        free(customer); // Customer leaves after being served
+        return wait;    // Return how long they waited
+    }
+    return -1; // No service happened this minute
+}
+
+
+// ---------------------------
+// STATISTICAL FUNCTIONS
+// ---------------------------
+
+int compare_ints(const void* a, const void* b) {
+    return (*(int*)a - *(int*)b);
+}
+
+double calculate_mean(int* data, int size) {
+    if (size == 0) return 0.0;
+    double sum = 0.0;
+    for (int i = 0; i < size; i++) {
+        sum += data[i];
+    }
+    return sum / size;
+}
+
+double calculate_median(int* data, int size) {
+    if (size == 0) return 0.0;
+
+    // Make a copy to sort
+    int* sorted = (int*)malloc(size * sizeof(int));
+    for (int i = 0; i < size; i++) {
+        sorted[i] = data[i];
+    }
+
+    qsort(sorted, size, sizeof(int), compare_ints);
+
+    double median;
+    if (size % 2 == 0) {
+        median = (sorted[size/2 - 1] + sorted[size/2]) / 2.0;
+    } else {
+        median = sorted[size/2];
+    }
+
+    free(sorted);
+    return median;
+}
+
+// Mode = most frequent wait time
+int calculate_mode(int* data, int size) {
+    if (size == 0) return 0;
+
+    int* sorted = (int*)malloc(size * sizeof(int));
+    for (int i = 0; i < size; i++) {
+        sorted[i] = data[i];
+    }
+
+    qsort(sorted, size, sizeof(int), compare_ints);
+
+    int mode = sorted[0];
+    int max_count = 1;
+    int current_count = 1;
+
+    for (int i = 1; i < size; i++) {
+        if (sorted[i] == sorted[i-1]) {
+            current_count++;
+        } else {
+            if (current_count > max_count) {
+                max_count = current_count;
+                mode = sorted[i-1];
+            }
+            current_count = 1;
+        }
+    }
+
+    if (current_count > max_count) {
+        mode = sorted[size-1];
+    }
+
+    free(sorted);
+    return mode;
+}
+
+double calculate_std_dev(int* data, int size, double mean) {
+    if (size == 0) return 0.0;
+
+    double sum_squared_diff = 0.0;
+    for (int i = 0; i < size; i++) {
+        double diff = data[i] - mean;
+        sum_squared_diff += diff * diff;
+    }
+
+    return sqrt(sum_squared_diff / size);
+}
+
+int find_max(int* data, int size) {
+    if (size == 0) return 0;
+
+    int max = data[0];
+    for (int i = 1; i < size; i++) {
+        if (data[i] > max) {
+            max = data[i];
+        }
+    }
+    return max;
+}
+
+
+// ---------------------------
+// FINAL REPORT
+// ---------------------------
+
+void print_final_report(WaitTimeArray* wait_times, int total_arrived, int total_served, int remaining) {
+
+    if (wait_times->size > 0) {
+        double mean = calculate_mean(wait_times->data, wait_times->size);
+        double median = calculate_median(wait_times->data, wait_times->size);
+        int mode = calculate_mode(wait_times->data, wait_times->size);
+        double std_dev = calculate_std_dev(wait_times->data, wait_times->size, mean);
+        int max_wait = find_max(wait_times->data, wait_times->size);
+
+        printf("===== WAIT TIME ANALYSIS =====\n");
+        printf("Mean wait time: %.2f minutes\n", mean);
+        printf("Median wait time: %.2f minutes\n", median);
+        printf("Mode wait time: %d minutes\n", mode);
+        printf("Standard Deviation: %.2f minutes\n", std_dev);
+        printf("Longest wait time: %d minutes\n", max_wait);
+        printf("===============================\n\n");
+
+        // Simple suggestion for manager
+        if (mode > 10) {
+            printf("RECOMMENDATION: Average wait time exceeds 10 minutes.\n");
+            printf("Consider hiring additional tellers.\n");
+        } else {
+            printf("STATUS: Wait times are acceptable.\n");
+        }
+    } else {
+        printf("No customers were served during the simulation.\n");
+    }
+}
+
+
+// ---------------------------
+// MAIN FUNCTION
+// ---------------------------
+
+int main() {
+    srand(time(NULL)); // Random seed for Poisson arrivals
+
+    double lambda;  // Average arrivals per minute
+    int num_tellers;
+    int service_time;
+
+    printf("\n");
+    printf("========================================\n");
+    printf("    BANK QUEUE SIMULATOR (8-hour day)\n");
+    printf("========================================\n\n");
+
+    // Take inputs from user
+    printf("Enter the average number of customers arriving per minute (λ): ");
+    scanf("%lf", &lambda);
+
+    if (lambda <= 0) {
+        printf("Error: Lambda must be positive.\n");
+        return 1;
+    }
+
+    printf("Enter the number of tellers: ");
+    scanf("%d", &num_tellers);
+
+    if (num_tellers <= 0) {
+        printf("Error: Number of tellers must be positive.\n");
+        return 1;
+    }
+
+    printf("Enter the service time per customer (min.): ");
+    scanf("%d", &service_time);
+
+    if (service_time <= 0) {
+        printf("Error: Service time must be positive.\n");
+        return 1;
+    }
+
+    // Initialize data structures
+    Queue queue;
+    init_queue(&queue);
+
+    Teller* tellers = (Teller*)malloc(num_tellers * sizeof(Teller));
+    for (int i = 0; i < num_tellers; i++) {
+        tellers[i].busy_until = 0;
+        tellers[i].current_customer_id = -1;
+    }
+
+    WaitTimeArray* wait_times = create_wait_time_array();
+
+    int total_customers_arrived = 0;
+    int total_customers_served = 0;
+
+    printf("\nSimulating 8-hour day (480 minutes)...\n");
+
+    // ---------------------------
+    // MAIN SIMULATION LOOP
+    // ---------------------------
+    for (int minute = 0; minute < 480; minute++) {
+        // Determine number of new arrivals this minute using Poisson distribution
+        int arrivals = customer_arrives(lambda);
+        total_customers_arrived += arrivals;
+
+        // Add each arriving customer to queue
+        for (int i = 0; i < arrivals; i++) {
+            enqueue(&queue, minute);
+        }
+
+        // Each teller checks if they can serve someone
+        for (int t = 0; t < num_tellers; t++) {
+            int wait = serve_customer(&queue, &tellers[t], minute, service_time);
+            if (wait >= 0) {
+                add_wait_time(wait_times, wait);
+                total_customers_served++;
+            }
+        }
+    }
+
+    // Display summary report at the end
+    print_final_report(wait_times, total_customers_arrived, total_customers_served, queue.size);
+
+    // Free all allocated memory
+    free_queue(&queue);
+    free(tellers);
+    free_wait_time_array(wait_times);
+
+    return 0;
+}
+
