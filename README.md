@@ -1,7 +1,8 @@
-**------------------------------------------------------------------------COC-Project-Bank Queue-Simulator-----------------------------------------------------------------------------**
+**---------------------------------------------------COC-Project-Bank Queue-Simulator------------------------------------------------**
 
 
 ## 📖 Project Description:-
+---------------------------
 The **Bank Queue (Poisson) Simulator** is a C program that models how customers arrive and are served at a bank throughout a typical 8-hour working day (480 minutes).  
 The simulation helps the bank’s management analyze customer wait times and decide whether hiring additional tellers is necessary.
 
@@ -10,6 +11,7 @@ At the end of the simulation, the program calculates key statistical metrics —
 
 
 ## Concepts Used:- 
+-----------------
 # 💻 C Programming Concepts
 - `struct` (to represent customers and queue)
 - Dynamic Memory Management: `malloc()`, `free()`
@@ -43,9 +45,8 @@ After Executing, the terminal will show as:-
 $ gcc bank_queue.c -o bank_queue -lm
 $ ./bank_queue
 
-=======================================
+======================================
     BANK QUEUE SIMULATOR (8-hour day)
-=======================================
 
 Enter the average number of customers arriving per minute (λ): 1
 Enter the number of tellers: 3
@@ -58,7 +59,7 @@ Median wait time: 18.00 minutes
 Mode wait time: 25 minutes
 Standard Deviation: 8.38 minutes
 Longest wait time: 31 minutes
-==================
+========================================
 
 RECOMMENDATION: Average wait time exceeds 10 minutes.
 Consider hiring additional tellers.
