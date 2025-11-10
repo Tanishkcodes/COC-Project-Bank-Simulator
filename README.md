@@ -44,21 +44,26 @@ Use the following commands to compile and execute the program:
 --------------
 After Executing, the terminal will show as:-
 
-**Example Terminal Session:-**
-```
+**Example Terminal Session:**
+
+```bash
+# Compile the program
 $ gcc bank_queue.c -o bank_queue -lm
+
+# Run the program
 $ ./bank_queue
 
-##Output:-
 ======================================
     BANK QUEUE SIMULATOR (8-hour day)
+======================================
 
 Enter the average number of customers arriving per minute (λ): 1
 Enter the number of tellers: 3
 Enter the service time per customer (min.): 3
 
 Simulating 8-hour day (480 minutes)...
-== WAIT TIME ANALYSIS ==
+
+===== WAIT TIME ANALYSIS =====
 Mean wait time: 16.30 minutes
 Median wait time: 18.00 minutes
 Mode wait time: 25 minutes
@@ -67,9 +72,8 @@ Longest wait time: 31 minutes
 ========================================
 
 RECOMMENDATION: Average wait time exceeds 10 minutes.
-Consider hiring additional tellers.```
-
-
+Consider hiring additional tellers.
+```
 
 
 
