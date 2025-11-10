@@ -32,13 +32,16 @@ At the end of the simulation, the program calculates key statistical metrics —
 
 
 ## How to Compile:-
+------------------
 Use the following commands to compile and execute the program:
 
+```
 [gcc bank_queue.c -o bank_queue -lm]
 [./bank_queue]
-
+```
 
 ## How to Run:-
+--------------
 After Executing, the terminal will show as:-
 
 **Example Terminal Session:-**
