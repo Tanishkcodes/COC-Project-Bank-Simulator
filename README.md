@@ -49,6 +49,7 @@ After Executing, the terminal will show as:-
 $ gcc bank_queue.c -o bank_queue -lm
 $ ./bank_queue
 
+##Output:-
 ======================================
     BANK QUEUE SIMULATOR (8-hour day)
 
