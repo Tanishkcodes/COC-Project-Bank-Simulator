@@ -1,11 +1,10 @@
 /*
-  Bank Queue Simulation - 
-  - 480-minute main loop implemented with a for-loop
+  Bank Queue Simulation Details given as per guidlines - 
+  - 480-minute main loop with a for-loop
   - Poisson arrivals per minute
   - Dynamic linked-list queue using malloc/free
-  - Multiple tellers (user input)
-  - Service time 2 or 3 minutes (uniform)
-  - Wait times recorded in a dynamic array (realloc)
+  - Service time 2 or 3 minutes
+  - Wait times recorded in a dynamic array 
   - Functions used for major tasks (customer_arrives, assign_tellers, process_services)
   - Final report: Mean, Median, Mode, Standard Deviation, Longest Wait.
 */
@@ -18,14 +17,12 @@
 #include <math.h>
 #include <time.h>
 
-// ---------------------------
 // STRUCTURE DEFINITIONS
-// ---------------------------
 
 // Structure for each customer in queue
 typedef struct Customer {
     int arrival_time;          // When customer arrives at bank
-    int service_start_time;    // When teller starts serving them
+    int service_start_time;    // When teller starts serving 
     int wait_time;             // Time spent waiting before service
     struct Customer* next;     // Pointer to next customer (for linked list)
 } Customer;
@@ -138,7 +135,7 @@ void free_wait_time_array(WaitTimeArray* arr) {
 
 
 // ---------------------------
-// POISSON ARRIVAL FUNCTIONS
+// POISSON FUNCTIONS
 // ---------------------------
 
 // Factorial function for Poisson formula
@@ -197,10 +194,6 @@ int serve_customer(Queue* q, Teller* teller, int current_minute, int service_tim
     return -1; // No service happened this minute
 }
 
-
-// ---------------------------
-// STATISTICAL FUNCTIONS
-// ---------------------------
 
 int compare_ints(const void* a, const void* b) {
     return (*(int*)a - *(int*)b);
@@ -389,9 +382,6 @@ int main() {
 
     printf("\nSimulating 8-hour day (480 minutes)...\n");
 
-    // ---------------------------
-    // MAIN SIMULATION LOOP
-    // ---------------------------
     for (int minute = 0; minute < 480; minute++) {
         // Determine number of new arrivals this minute using Poisson distribution
         int arrivals = customer_arrives(lambda);
